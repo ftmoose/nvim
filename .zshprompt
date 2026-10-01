@@ -1,0 +1,32 @@
+# Shell prompt, shared across machines. Sourced from ~/.zshrc by `just zshprompt`.
+# Two lines: cwd + git branch (+ aws profile), then a > coloured by last exit status.
+
+setopt PROMPT_SUBST
+
+_prompt_git() {
+  local gitdir common branch wt=""
+  gitdir=$(git rev-parse --git-dir 2>/dev/null) || return
+  common=$(git rev-parse --git-common-dir 2>/dev/null)
+  # linked worktree: .git dir is not the common dir
+  if [[ ${gitdir:A} != ${common:A} ]]; then
+    local top=$(git rev-parse --show-toplevel); wt="%F{magenta}${top:h:t}%f/"
+  fi
+  branch=$(git symbolic-ref --short -q HEAD 2>/dev/null) \
+    || branch="@$(git rev-parse --short HEAD 2>/dev/null)"
+  print -rn -- " ${wt}%F{green}${branch}%f"
+}
+
+_prompt_aws() {
+  [[ -n $AWS_PROFILE ]] || return
+  local exp=${AWS_SESSION_EXPIRATION:-$AWS_CREDENTIAL_EXPIRATION} exp_s
+  if [[ -n $exp ]]; then
+    # RFC3339 -> epoch (strip ':' in tz offset for %z); hide if expired
+    exp_s=$(strftime -r '%Y-%m-%dT%H:%M:%S%z' "${exp%:??}${exp##*[+-]??:}" 2>/dev/null) \
+      || exp_s=$(date -j -f '%Y-%m-%dT%H:%M:%S%z' "${exp%:??}${exp##*[+-]??:}" +%s 2>/dev/null)
+    [[ -n $exp_s && $exp_s -le $EPOCHSECONDS ]] && return
+  fi
+  print -rn -- " %F{yellow}aws:${AWS_PROFILE}%f"
+}
+
+PROMPT='%F{cyan}%~%f$(_prompt_git)$(_prompt_aws)
+%(?.%F{green}.%F{red})>%f '

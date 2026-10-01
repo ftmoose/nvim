@@ -32,6 +32,7 @@ launch finishes any remaining plugin and parser work.
 | `plugins` | installs plugins at the commits in `lazy-lock.json`, compiles parsers  |
 | `tools`   | installs language servers and formatters via Mason                     |
 | `claude`  | installs the Claude Code CLI if missing                                |
+| `zshprompt` | adds one line to `~/.zshrc` that sources `.zshprompt` (the shell prompt) |
 
 `just doctor` reports what's present and what isn't. `just update` upgrades
 plugins; commit the new `lazy-lock.json` afterwards.

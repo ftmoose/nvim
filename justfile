@@ -10,7 +10,7 @@ default:
     @just --list
 
 # Everything a fresh machine needs, in order. Safe to re-run.
-setup: brew link plugins tools claude
+setup: brew link plugins tools claude zshprompt
     @echo
     @echo "Done. Set your terminal font to 'Hack Nerd Font Mono', then run nvim."
 
@@ -46,6 +46,19 @@ tools:
 claude:
     @command -v claude >/dev/null && echo "claude ok: $(claude --version)" \
         || curl -fsSL https://claude.ai/install.sh | bash
+
+# Make ~/.zshrc source ./.zshprompt (adds one line, only if it isn't there yet).
+zshprompt:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    line='[[ -f "{{ justfile_directory() }}/.zshprompt" ]] && source "{{ justfile_directory() }}/.zshprompt"'
+    rc="$HOME/.zshrc"; touch "$rc"
+    if grep -qF -- "$line" "$rc"; then
+        echo "zshrc already sources .zshprompt"
+    else
+        printf '\n# Prompt from the nvim repo (just zshprompt)\n%s\n' "$line" >> "$rc"
+        echo "added to $rc: $line"
+    fi
 
 # Update plugins to latest, then commit lazy-lock.json to pin them.
 update:
